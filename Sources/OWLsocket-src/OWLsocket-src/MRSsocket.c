@@ -1,32 +1,36 @@
-/* Martin R Simpson (c) University of Plymouth,2017
-* for the OWL robot
-* this code sits on the Raspberry Pi, acts as a IP server for PWM servo packets
-*
-*
-*    Permission is granted to copy, distribute and/or modify this document
-*    under the terms of the GNU Free Documentation License, Version 1.3
-*    or any later version published by the Free Software Foundation;
-*    with no Invariant Sections.
-*
-* Version 2 Corrected Order of Data from Left Right Neck to Right Left Neck
-* and a translation of PYTHON code from PFCsocket.py
-* to drive the OWL-BOTS eyes
-* M R Simpson 25th May 2017
-* 
-* This will open a TCP Socket using (ip:port) 10.0.0.10:12345
-* Expect a packet of 5 Integers Space delimited (as a string)
-* Number of Integers * Size of Integers + Space minus one space as
-* Packet terminated by CR/LF thus: 5 * (4 + 1) - 1 = 24 (Size of packet array
-*
-* and to execute code
-* pi@raspberry:~ $ ./MRSsocket
-*
+// Version 2 Corrected Order of Data from Left Right Neck to Right Left Neck
+
+/* A socket Server based on myServer.c (see below for reference)
+and a translation of PYTHON code from PFCsocket.py
+to drive the OWL-BOTS eyes
+M R Simpson 25th May 2017
+NB the following!
+This will open a TCP Socket using (ip:port) 10.0.0.10:12345
+Expect a packet of 5 Integers Space delimited (as a string)
+Each Integer will have a capped range of 1200 to 2000 (inclusive)
+Number of Integers * Size of Integers + Space minus one space as
+Packet terminated by CR/LF thus: 5 * (4 + 1) - 1 = 24 (Size of packet array
+
+compiled using the following command line (For reference)
+pi@raspberry:~ $ gcc -Wall -pthread -o MRSsocket MRSsocket.c -lpigpio_if2
+
+and to execute code
+pi@raspberry:~ $ ./MRSsocket
+*/
+
 /* A simple server in the internet domain using TCP. myServer.c
-* D. Thiebaut
-* Adapted from http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
-*
-* If the server receives -1 it closes the socket with the client.
-* If the server receives -2, it exits.
+D. Thiebaut
+Adapted from http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
+The port number used in 51717.
+This code is compiled and run on the Raspberry as follows:
+
+    g++ -o myServer myServer.c
+    ./myServer
+
+The server waits for a connection request from a client.
+The server assumes the client will send positive integers, which it sends back multiplied by 2.
+If the server receives -1 it closes the socket with the client.
+If the server receives -2, it exits.
 */
 
 #include <stdio.h>
@@ -77,7 +81,7 @@ void stop(int signum)
         run = 0;
 }
 
-// echo data packet bytes received as a simple check (ie. no checksum done or required)
+//Left in for future use??? Not used in this application no speed loading
 void sendData( int sockfd, int x ) {
         int n;
         char buffer[32];

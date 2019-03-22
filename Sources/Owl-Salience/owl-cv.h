@@ -3,13 +3,7 @@
 
 #endif // OWLCV_H
 
-/* copyright Phil Culverhouse, Centre for Robotics & Nenural Systems, University of Plymouth, 2016
- *
- *
- *    Permission is granted to copy, distribute and/or modify this document
- *    under the terms of the GNU Free Documentation License, Version 1.3
- *    or any later version published by the Free Software Foundation;
- *    with no Invariant Sections.
+/* Phil Culverhouse
  *
  * Vision Processing for OWL camera system
  *  Currently provides Normalised Cross Correlation for template match
@@ -17,14 +11,15 @@
  *  uses the Right eye for template source.
  * (c) Plymouth University, 2016
  */
-#include <opencv2/core/core.hpp>        // Basic OpenCV structures (cv::Mat)
+#include <iostream>
+#include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/imgcodecs.hpp>
+
 
 using namespace std;
 using namespace cv;
+
 struct OwlCorrel {
     Point Match;
     Mat Result;
@@ -47,7 +42,7 @@ OWL.Result.create(result_rows, result_cols,  CV_32FC1 );
 /// Do the Matching and Normalize
 int match_method = 5; /// CV_TM_CCOEFF_NORMED;
 matchTemplate( Left, templ, OWL.Result, match_method );
-normalize( OWL.Result, OWL.Result, 0, 1, NORM_MINMAX, -1, Mat() );
+normalize( OWL.Result, OWL.Result);
 /// Localizing the best match with minMaxLoc
 double minVal; double maxVal; Point minLoc; Point maxLoc;
 Point matchLoc;
@@ -55,10 +50,36 @@ Point matchLoc;
 minMaxLoc( OWL.Result, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
 
 /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
-if( match_method  == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED )
+//if( match_method  == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED ) //CV3
+if( match_method  == cv::TM_SQDIFF || match_method == cv::TM_SQDIFF_NORMED ) //CV4
 { OWL.Match = minLoc; }
 else
 { OWL.Match = maxLoc; }
 
-return (OWL); // return location of best match, and the match
+return (OWL);
+}
+
+int OwlCalCapture(cv::VideoCapture &cap, string Folder){
+
+int count=20;
+cv::Mat Frame;
+    for (int i=0;i<count;i++){
+    if (!cap.read(Frame))
+    {
+        return(-1);
+    }
+    //Mat FrameFlpd; cv::flip(Frame,FrameFlpd,1); // Note that Left/Right are reversed now
+    //Mat Gray; cv::cvtColor(Frame, Gray, cv::COLOR_BGR2GRAY);
+    // Split into LEFT and RIGHT images from the stereo pair sent as one MJPEG iamge
+    cv::Mat Right= Frame( Rect(0, 0, 640, 480)); // using a rectangle
+    cv::Mat Left=  Frame( Rect(640, 0, 640, 480)); // using a rectanglecv::imwrite(Folder + "left" + count + "jpg", Left);
+    string fnameR(Folder + "right" + to_string(i) + ".jpg");
+    string fnameL=(Folder + "left" +  to_string(i) + ".jpg");
+    cv::imwrite(fnameL, Left);
+    cv::imwrite(fnameR, Right);
+    cout << "Saved " << i << " stereo pair" << Folder <<endl;
+    cv::waitKey(0);
+}
+    cout << "Just saved 10 stereo pairs" << Folder <<endl;
+    return(0);
 }
